@@ -13,6 +13,20 @@ class WebServer {
         }
         return mime;
     }
+    static notFound(result, mdata, server) {
+        result.res.writeHead(404);
+        let coutent = "";
+        if (mdata.notFound) {
+            let notfoundPath = server.rootDir + "/" + mdata.notFound;
+            notfoundPath = notfoundPath.split("//").join("/");
+            coutent = fs.readFileSync(notfoundPath).toString();
+        }
+        else {
+            coutent = fs.readFileSync(path.dirname(__dirname) + "/htdocs/notfound.html").toString();
+        }
+        result.res.write(coutent);
+        result.res.end();
+    }
     static listen(result, moduleData, server) {
         if (!moduleData) {
             return;
@@ -36,7 +50,6 @@ class WebServer {
                     const fname = m_.indexed[n];
                     const checkPath = targetPath + fname;
                     if (fs.existsSync(checkPath)) {
-                        console.log("exiets!!");
                         targetPath = checkPath;
                         exists = true;
                     }
@@ -48,16 +61,38 @@ class WebServer {
                 }
             }
             if (!exists) {
-                result.res.writeHead(404);
-                result.res.write("404 Not Found");
-                result.res.end();
-                return;
+                return WebServer.notFound(result, m_, server);
+            }
+            if (m_.authority) {
             }
             const mime = WebServer.getMime(targetPath);
             const contents = fs.readFileSync(targetPath);
-            result.res.writeHead(200, {
-                mimeType: mime,
-            });
+            let headers = {};
+            headers["mimeType"] = mime;
+            if (m_.cache) {
+                let juge = true;
+                let cache = "";
+                if (m_.cache.ignore) {
+                    for (let n2 = 0; n2 < m_.cache.ignore.length; n2++) {
+                        const target = m_.cache.ignore[n2];
+                        if (path.basename(targetPath) === target) {
+                            juge = false;
+                            break;
+                        }
+                        if (path.extname(targetPath) === ("." + target)) {
+                            juge = false;
+                            break;
+                        }
+                    }
+                }
+                if (juge) {
+                    if (m_.cache.max) {
+                        cache = "max-age=" + m_.cache.max;
+                    }
+                    headers["cache-control"] = cache;
+                }
+            }
+            result.res.writeHead(200, headers);
             result.res.write(contents);
             result.res.end();
         }
