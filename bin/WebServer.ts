@@ -1,13 +1,12 @@
-import ServerUtil from "@flagfw/server/bin/common/Util";
 import * as path from "path";
 import * as fs from "fs";
 import Mimes from "./Mimes";
 
 export default class WebServer{
-    
-    public static pageCapacita = {};
 
-    public static getMime(filePath : string){
+    private static errorPageBuffer : string = "";
+
+    private static getMime(filePath : string) : string{
         let ext = path.extname(filePath)
         ext = ext.split(".").join("");
 
@@ -21,15 +20,27 @@ export default class WebServer{
 
     private static notFound(result, mdata, server){
         result.res.writeHead(404);
-        let coutent = "";
-        if(mdata.notFound){
-            let notfoundPath = server.rootDir + "/" + mdata.notFound;
-            notfoundPath = notfoundPath.split("//").join("/");
-            coutent = fs.readFileSync(notfoundPath).toString();
+
+        let coutent : string = "";
+        if(WebServer.errorPageBuffer){
+            coutent = WebServer.errorPageBuffer;
         }
         else{
-            coutent = fs.readFileSync(path.dirname(__dirname) + "/htdocs/notfound.html").toString();
+            let notFoundPath : string;
+
+            if(mdata.notFound){
+                notFoundPath = server.rootDir + "/" + mdata.notFound;
+            }
+            else{
+                notFoundPath = path.dirname(__dirname) + "/htdocs/notfound.html";
+            }
+
+            notFoundPath = notFoundPath.split("//").join("/");
+
+            coutent = fs.readFileSync(notFoundPath).toString();
+            WebServer.errorPageBuffer = coutent;            
         }
+
         result.res.write(coutent);
         result.res.end();
     }
@@ -77,12 +88,6 @@ export default class WebServer{
             if(!exists){                
                 return WebServer.notFound(result, m_, server);
             }
-
-            if(m_.authority){
-                
-
-            }
-
 
             const mime = WebServer.getMime(targetPath);
 

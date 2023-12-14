@@ -16,13 +16,20 @@ class WebServer {
     static notFound(result, mdata, server) {
         result.res.writeHead(404);
         let coutent = "";
-        if (mdata.notFound) {
-            let notfoundPath = server.rootDir + "/" + mdata.notFound;
-            notfoundPath = notfoundPath.split("//").join("/");
-            coutent = fs.readFileSync(notfoundPath).toString();
+        if (WebServer.errorPageBuffer) {
+            coutent = WebServer.errorPageBuffer;
         }
         else {
-            coutent = fs.readFileSync(path.dirname(__dirname) + "/htdocs/notfound.html").toString();
+            let notFoundPath;
+            if (mdata.notFound) {
+                notFoundPath = server.rootDir + "/" + mdata.notFound;
+            }
+            else {
+                notFoundPath = path.dirname(__dirname) + "/htdocs/notfound.html";
+            }
+            notFoundPath = notFoundPath.split("//").join("/");
+            coutent = fs.readFileSync(notFoundPath).toString();
+            WebServer.errorPageBuffer = coutent;
         }
         result.res.write(coutent);
         result.res.end();
@@ -63,8 +70,6 @@ class WebServer {
             if (!exists) {
                 return WebServer.notFound(result, m_, server);
             }
-            if (m_.authority) {
-            }
             const mime = WebServer.getMime(targetPath);
             const contents = fs.readFileSync(targetPath);
             let headers = {};
@@ -98,4 +103,5 @@ class WebServer {
         }
     }
 }
+WebServer.errorPageBuffer = "";
 exports.default = WebServer;
