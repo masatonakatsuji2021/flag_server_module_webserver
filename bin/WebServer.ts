@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import Mimes from "./Mimes";
+import Elf from "./Elf";
 
 export default class WebServer{
 
@@ -45,7 +46,7 @@ export default class WebServer{
         result.res.end();
     }
 
-    public static listen(result, moduleData, server){
+    public static async listen(result, moduleData, server){
         if(!moduleData){
             return;
         }
@@ -57,13 +58,17 @@ export default class WebServer{
                 m_.indexed = [];
             }
 
+            let targetRoot : string;
             let targetPath : string = "";
             if(m_.rootDir.indexOf("./") === 0){
-                targetPath = server.rootDir + m_.rootDir.substring(1) + "/" + result.req.url;
+                targetRoot = server.rootDir + m_.rootDir.substring(1);
             }
             else{
-                targetPath = m_.rootDir + "/" + result.req.url;
+                targetRoot = server.rootDir;
             }
+            let url = result.req.url;
+            url = url.split("?")[0];
+            targetPath = targetRoot + "/" + url;
 
             targetPath = targetPath.split("//").join("/");
 
@@ -91,7 +96,7 @@ export default class WebServer{
 
             const mime = WebServer.getMime(targetPath);
 
-            const contents = fs.readFileSync(targetPath);
+            let contents = fs.readFileSync(targetPath);
             let headers = {};
             headers["mimeType"] = mime;
 
@@ -118,6 +123,32 @@ export default class WebServer{
                         cache = "max-age=" + m_.cache.max;
                     }
                     headers["cache-control"] = cache;
+                }
+            }
+
+            if(m_.elf){
+                if(path.extname(targetPath) == ".elf"){
+                    let ec_ : string;
+                    let eopt = {};
+                    if(typeof m_.elf == "boolean"){
+                        eopt = {};
+                    }
+                    else{
+                        eopt = m_.elf;
+                    }
+                    // @ts-ignore
+                    eopt.req = result.req;
+                    // @ts-ignore
+                    eopt.res = result.res;
+                    // @ts-ignore
+                    eopt.rootDir = targetRoot;
+                    // @ts-ignore
+                    if(eopt.outError){
+                        // @ts-ignore
+                        eopt.errorFormat = "<p style=\"font-weight:bold\">{error}</p>";
+                    }
+                    ec_ = await Elf.convert(contents.toString(), eopt);
+                    contents = Buffer.from(ec_);
                 }
             }
 

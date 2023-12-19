@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Mimes = {
-    html: "text/html",
-    htm: "text/html",
+    html: "text/html; charset=utf-8",
+    htm: "text/html; charset=utf-8",
+    elf: "text/html; charset=utf-8",
     js: "text/javascript",
     json: "application/json",
     jpg: "image/jpeg",

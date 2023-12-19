@@ -12,17 +12,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Util_1 = require("@flagfw/flag/bin/Util");
 const ElfSandbox_1 = require("./ElfSandbox");
 const fs = require("fs");
+/**
+ * Embeded interpreter Frame
+ */
 class Elf {
     static convertEchob64(code) {
         return "echob64(\"" + Util_1.default.base64Encode(code) + "\");";
     }
-    static loadFile(filePath, option) {
+    static loadFile(filePath, option, sendData) {
         return __awaiter(this, void 0, void 0, function* () {
             const content = fs.readFileSync(filePath).toString();
-            return yield Elf.convert(content, option);
+            return yield Elf.convert(content, option, sendData);
         });
     }
-    static convert(codeString, option) {
+    static convert(codeString, option, sendData) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!option) {
                 option = {};
@@ -45,7 +48,7 @@ class Elf {
             }
             // @ts-ignore
             option.context = Elf;
-            return yield ElfSandbox_1.default.sandbox(decString, option);
+            return yield ElfSandbox_1.default.sandbox(decString, option, sendData);
         });
     }
 }

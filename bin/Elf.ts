@@ -2,6 +2,9 @@ import Util from "@flagfw/flag/bin/Util";
 import ElfSandbox from "./ElfSandbox";
 import * as fs from "fs";
 
+/**
+ * Embeded interpreter Frame
+ */
 export default class Elf{
 
     public static header = "<?";
@@ -11,12 +14,12 @@ export default class Elf{
         return "echob64(\"" + Util.base64Encode(code) + "\");";
     }
 
-    public static async loadFile(filePath : string , option? : Object){
+    public static async loadFile(filePath : string , option? : Object, sendData?){
         const content = fs.readFileSync(filePath).toString();
-        return await Elf.convert(content, option);
+        return await Elf.convert(content, option, sendData);
     }
 
-    public static async convert(codeString : string, option? : Object){
+    public static async convert(codeString : string, option? : Object, sendData?){
 
         if(!option){
             option = {};
@@ -45,7 +48,7 @@ export default class Elf{
         // @ts-ignore
         option.context = Elf;
 
-        return await ElfSandbox.sandbox(decString, option);
+        return await ElfSandbox.sandbox(decString, option, sendData);
     }
     
 }
