@@ -10,8 +10,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Util_1 = require("@flagfw/flag/bin/Util");
-const fs = require("fs");
-const querystring = require("querystring");
+const echo_1 = require("./elfs/echo");
+const debug_1 = require("./elfs/debug");
+const GetQuery_1 = require("@flagfw/server/bin/common/GetQuery");
+const GetBody_1 = require("@flagfw/server/bin/common/GetBody");
+const load_1 = require("./elfs/load");
+const sleep_1 = require("./elfs/sleep");
 class _ {
     static sandbox(scString, option, send) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24,165 +28,24 @@ class _ {
                     ___output___ += Util_1.default.base64Decode(string);
                 };
                 const echo = (text) => {
-                    if (text instanceof Promise) {
-                        text.then((res) => {
-                            if (res) {
-                                ___output___ += res;
-                            }
-                        });
-                    }
-                    else {
-                        if (text) {
-                            ___output___ += text;
-                        }
-                    }
+                    ___output___ = (0, echo_1.default)(___output___, text);
                 };
                 const debug = (data) => {
-                    if (data === null) {
-                        data = "null";
-                    }
-                    if (data === undefined) {
-                        data = "undefined";
-                    }
-                    if (typeof data == "object") {
-                        if (Array.isArray(data)) {
-                            ___output___ += "<div><pre><code>[" + data.toString() + "]</code></pre></div>";
-                        }
-                        else {
-                            const __debug = (data, num) => {
-                                let str = "\n";
-                                if (!num) {
-                                    num = 0;
-                                }
-                                const indent = num + 2;
-                                let indentStr = "";
-                                for (let n = 0; n < indent; n++) {
-                                    indentStr += " ";
-                                }
-                                const c = Object.keys(data);
-                                let maxLength = 0;
-                                for (let n = 0; n < c.length; n++) {
-                                    const name = c[n];
-                                    if (maxLength < name.length) {
-                                        maxLength = name.length;
-                                    }
-                                }
-                                for (let n = 0; n < c.length; n++) {
-                                    const name = c[n];
-                                    const value = data[name];
-                                    if (typeof value == "object") {
-                                        str += indentStr + name.padStart(maxLength + 2) + ": [" + __debug(value, indent + maxLength + 2);
-                                        str += indentStr + "".padStart(maxLength + 4) + "]\n";
-                                    }
-                                    else {
-                                        if (typeof value == "string") {
-                                            str += indentStr + name.padStart(maxLength + 2) + ": \"" + value.toString() + "\"\n";
-                                        }
-                                        else {
-                                            str += indentStr + name.padStart(maxLength + 2) + ": " + value.toString() + "\n";
-                                        }
-                                    }
-                                }
-                                return str;
-                            };
-                            ___output___ += "<div><pre><code>[" + __debug(data) + "]</code></pre></div>";
-                        }
-                    }
-                    else {
-                        ___output___ += "<div><pre><code>" + data.toString() + "</code></pre></div>";
-                    }
+                    ___output___ = (0, debug_1.default)(___output___, data);
                 };
                 const getQuery = () => {
-                    if (!option.req) {
-                        return;
-                    }
-                    const queryBuff = option.req.url.split("?")[1];
-                    if (!queryBuff) {
-                        return;
-                    }
-                    let query = querystring.parse(queryBuff);
-                    return query;
+                    return (0, GetQuery_1.default)(option);
                 };
                 const getBody = () => {
-                    return new Promise((resolve) => {
-                        if (!option.req) {
-                            return;
-                        }
-                        let dataStr = "";
-                        option.req.on("data", (d_) => {
-                            dataStr += d_;
-                        });
-                        option.req.on("end", () => {
-                            // @ts-ignore
-                            const contentType = option.req.headers["content-type"];
-                            if (!contentType) {
-                                return resolve(null);
-                            }
-                            let data = null;
-                            if (contentType == "application/x-www-form-urlencoded") {
-                                data = querystring.parse(dataStr);
-                                const c = Object.keys(data);
-                                for (let n = 0; n < c.length; n++) {
-                                    const key = c[n];
-                                    let val = data[key];
-                                    val = decodeURIComponent(val);
-                                    data[key] = val;
-                                }
-                            }
-                            else if (contentType.indexOf("multipart/form-data") === 0) {
-                                let data = {};
-                                const boundary = contentType.split("boundary=")[1];
-                                const dataBuffer = dataStr.split(boundary);
-                                for (let n = 0; n < dataBuffer.length; n++) {
-                                    const db_ = dataBuffer[n];
-                                    if (db_.indexOf("--") === 0) {
-                                        continue;
-                                    }
-                                    const databuffer2 = db_.split("\r\n");
-                                    let value = null;
-                                    let name = null;
-                                    for (let n2 = 0; n2 < databuffer2.length; n2++) {
-                                        const db2_ = databuffer2[n2];
-                                        if (!db2_ || db2_ == "--") {
-                                            continue;
-                                        }
-                                        if (db2_.indexOf("name=\"") > -1) {
-                                            name = db2_.split("name=\"")[1].split("\"").join("");
-                                        }
-                                        else {
-                                            value = db2_;
-                                        }
-                                    }
-                                    data[name] = value;
-                                }
-                                console.log(data);
-                            }
-                            else if (contentType == "text/plain") {
-                                data = querystring.parse(dataStr);
-                            }
-                            resolve(data);
-                        });
-                    });
+                    return (0, GetBody_1.default)(option);
                 };
                 const load = (filePath, sendData) => __awaiter(this, void 0, void 0, function* () {
-                    let fullPath = filePath;
-                    if (option.rootDir) {
-                        fullPath = option.rootDir + "/" + filePath;
-                    }
-                    fullPath = fullPath.split("//").join("/");
-                    if (!fs.existsSync(fullPath)) {
-                        throw Error("no such found \"" + filePath + "\".");
-                    }
-                    const result = yield option.context.loadFile(fullPath, option, sendData);
-                    echo(result);
+                    ___output___ = yield (0, load_1.default)(___output___, filePath, sendData, option);
                 });
                 const sleep = (timeout) => {
-                    return new Promise((resolve) => {
-                        setTimeout(() => {
-                            resolve(true);
-                        }, timeout);
-                    });
+                    return (0, sleep_1.default)(timeout);
                 };
+                require = null;
                 yield eval("(async () => {" + scString + "})();");
             }
             catch (err) {
