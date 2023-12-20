@@ -37,6 +37,61 @@ class _ {
                         }
                     }
                 };
+                const debug = (data) => {
+                    if (data === null) {
+                        data = "null";
+                    }
+                    if (data === undefined) {
+                        data = "undefined";
+                    }
+                    if (typeof data == "object") {
+                        if (Array.isArray(data)) {
+                            ___output___ += "<div><pre><code>[" + data.toString() + "]</code></pre></div>";
+                        }
+                        else {
+                            const __debug = (data, num) => {
+                                let str = "\n";
+                                if (!num) {
+                                    num = 0;
+                                }
+                                const indent = num + 2;
+                                let indentStr = "";
+                                for (let n = 0; n < indent; n++) {
+                                    indentStr += " ";
+                                }
+                                const c = Object.keys(data);
+                                let maxLength = 0;
+                                for (let n = 0; n < c.length; n++) {
+                                    const name = c[n];
+                                    if (maxLength < name.length) {
+                                        maxLength = name.length;
+                                    }
+                                }
+                                for (let n = 0; n < c.length; n++) {
+                                    const name = c[n];
+                                    const value = data[name];
+                                    if (typeof value == "object") {
+                                        str += indentStr + name.padStart(maxLength + 2) + ": [" + __debug(value, indent + maxLength + 2);
+                                        str += indentStr + "".padStart(maxLength + 4) + "]\n";
+                                    }
+                                    else {
+                                        if (typeof value == "string") {
+                                            str += indentStr + name.padStart(maxLength + 2) + ": \"" + value.toString() + "\"\n";
+                                        }
+                                        else {
+                                            str += indentStr + name.padStart(maxLength + 2) + ": " + value.toString() + "\n";
+                                        }
+                                    }
+                                }
+                                return str;
+                            };
+                            ___output___ += "<div><pre><code>[" + __debug(data) + "]</code></pre></div>";
+                        }
+                    }
+                    else {
+                        ___output___ += "<div><pre><code>" + data.toString() + "</code></pre></div>";
+                    }
+                };
                 const getQuery = () => {
                     if (!option.req) {
                         return;
@@ -48,7 +103,7 @@ class _ {
                     let query = querystring.parse(queryBuff);
                     return query;
                 };
-                const getPost = () => {
+                const getBody = () => {
                     return new Promise((resolve) => {
                         if (!option.req) {
                             return;
@@ -59,10 +114,12 @@ class _ {
                         });
                         option.req.on("end", () => {
                             // @ts-ignore
-                            const contentTYpe = option.req.headers["content-type"];
+                            const contentType = option.req.headers["content-type"];
+                            if (!contentType) {
+                                return resolve(null);
+                            }
                             let data = null;
-                            if (contentTYpe == "application/x-www-form-urlencoded") {
-                                console.log(dataStr);
+                            if (contentType == "application/x-www-form-urlencoded") {
                                 data = querystring.parse(dataStr);
                                 const c = Object.keys(data);
                                 for (let n = 0; n < c.length; n++) {
@@ -72,9 +129,35 @@ class _ {
                                     data[key] = val;
                                 }
                             }
-                            else if (contentTYpe == "multipart/form-data") {
+                            else if (contentType.indexOf("multipart/form-data") === 0) {
+                                let data = {};
+                                const boundary = contentType.split("boundary=")[1];
+                                const dataBuffer = dataStr.split(boundary);
+                                for (let n = 0; n < dataBuffer.length; n++) {
+                                    const db_ = dataBuffer[n];
+                                    if (db_.indexOf("--") === 0) {
+                                        continue;
+                                    }
+                                    const databuffer2 = db_.split("\r\n");
+                                    let value = null;
+                                    let name = null;
+                                    for (let n2 = 0; n2 < databuffer2.length; n2++) {
+                                        const db2_ = databuffer2[n2];
+                                        if (!db2_ || db2_ == "--") {
+                                            continue;
+                                        }
+                                        if (db2_.indexOf("name=\"") > -1) {
+                                            name = db2_.split("name=\"")[1].split("\"").join("");
+                                        }
+                                        else {
+                                            value = db2_;
+                                        }
+                                    }
+                                    data[name] = value;
+                                }
+                                console.log(data);
                             }
-                            else if (contentTYpe == "text/plain") {
+                            else if (contentType == "text/plain") {
                                 data = querystring.parse(dataStr);
                             }
                             resolve(data);

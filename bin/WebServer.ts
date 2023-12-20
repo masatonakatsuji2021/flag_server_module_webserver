@@ -98,7 +98,7 @@ export default class WebServer{
 
             let contents = fs.readFileSync(targetPath);
             let headers = {};
-            headers["mimeType"] = mime;
+            headers["content-type"] = mime;
 
             if(m_.cache){
                 let juge = true;
@@ -126,6 +126,8 @@ export default class WebServer{
                 }
             }
 
+            result.res.writeHead(200, headers);
+
             if(m_.elf){
                 if(path.extname(targetPath) == ".elf"){
                     let ec_ : string;
@@ -152,7 +154,6 @@ export default class WebServer{
                 }
             }
 
-            result.res.writeHead(200, headers);
             result.res.write(contents);
             result.res.end();
         }

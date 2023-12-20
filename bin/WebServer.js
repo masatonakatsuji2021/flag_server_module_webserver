@@ -88,7 +88,7 @@ class WebServer {
                 const mime = WebServer.getMime(targetPath);
                 let contents = fs.readFileSync(targetPath);
                 let headers = {};
-                headers["mimeType"] = mime;
+                headers["content-type"] = mime;
                 if (m_.cache) {
                     let juge = true;
                     let cache = "";
@@ -112,6 +112,7 @@ class WebServer {
                         headers["cache-control"] = cache;
                     }
                 }
+                result.res.writeHead(200, headers);
                 if (m_.elf) {
                     if (path.extname(targetPath) == ".elf") {
                         let ec_;
@@ -137,7 +138,6 @@ class WebServer {
                         contents = Buffer.from(ec_);
                     }
                 }
-                result.res.writeHead(200, headers);
                 result.res.write(contents);
                 result.res.end();
             }
