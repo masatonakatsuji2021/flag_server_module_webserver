@@ -14,6 +14,8 @@ const echo_1 = require("./elfs/echo");
 const debug_1 = require("./elfs/debug");
 const GetQuery_1 = require("@flagfw/server/bin/common/GetQuery");
 const GetBody_1 = require("@flagfw/server/bin/common/GetBody");
+const Cookie_1 = require("@flagfw/server/bin/common/Cookie");
+const Session_1 = require("@flagfw/server/bin/common/Session");
 const load_1 = require("./elfs/load");
 const sleep_1 = require("./elfs/sleep");
 class _ {
@@ -45,6 +47,12 @@ class _ {
                 const sleep = (timeout) => {
                     return (0, sleep_1.default)(timeout);
                 };
+                let cookie = null;
+                let session = null;
+                if (option.req && option.res) {
+                    cookie = new Cookie_1.default(option.req, option.res);
+                    session = new Session_1.default(option.req, option.res);
+                }
                 require = null;
                 yield eval("(async () => {" + scString + "})();");
             }

@@ -126,7 +126,14 @@ export default class WebServer{
                 }
             }
 
-            result.res.writeHead(200, headers);
+            const c2 = Object.keys(headers);
+            for(let n2 = 0 ; n2 < c2.length ; n2++){
+                const key2 = c2[n2];
+                const val2 = headers[key2];
+                result.res.setHeader(key2, val2);
+            }
+            result.res.statusCode = 200;
+//            result.res.writeHead(200, headers);
 
             if(m_.elf){
                 if(path.extname(targetPath) == ".elf"){

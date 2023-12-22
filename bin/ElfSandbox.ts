@@ -3,6 +3,9 @@ import methodEcho from "./elfs/echo";
 import methodDebug from "./elfs/debug";
 import methodGetQuery from "@flagfw/server/bin/common/GetQuery";
 import methodGetBody from "@flagfw/server/bin/common/GetBody";
+import Cookie from "@flagfw/server/bin/common/Cookie";
+import Session from "@flagfw/server/bin/common/Session";
+
 import methodLoad from "./elfs/load";
 import methodSleep from "./elfs/sleep";
 
@@ -45,6 +48,13 @@ export default class _{
             const sleep = (timeout : number) : Promise<Boolean> =>{
                 return methodSleep(timeout);
             };
+
+            let cookie = null;
+            let session = null;
+            if(option.req && option.res){
+                cookie = new Cookie(option.req, option.res);
+                session = new Session(option.req, option.res);
+            }
 
             require = null;
 
