@@ -137,6 +137,8 @@ class WebServer {
                         // @ts-ignore
                         eopt.rootDir = targetRoot;
                         // @ts-ignore
+                        eopt.mostRootDir = server.rootDir;
+                        // @ts-ignore
                         if (eopt.outError) {
                             // @ts-ignore
                             eopt.errorFormat = "<p style=\"font-weight:bold\">{error}</p>";

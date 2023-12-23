@@ -50,8 +50,21 @@ class _ {
                 let cookie = null;
                 let session = null;
                 if (option.req && option.res) {
-                    cookie = new Cookie_1.default(option.req, option.res);
-                    session = new Session_1.default(option.req, option.res);
+                    if (option.req.cookie) {
+                        cookie = option.req.cookie;
+                    }
+                    else {
+                        cookie = new Cookie_1.default(option.req, option.res);
+                        option.req.cookie = cookie;
+                    }
+                    if (option.req.session) {
+                        session = option.req.session;
+                    }
+                    else {
+                        session = new Session_1.default(option.req, option.res);
+                        session.writePath = option.mostRootDir + "/.sessions";
+                        option.req.session = session;
+                    }
                 }
                 require = null;
                 yield eval("(async () => {" + scString + "})();");
